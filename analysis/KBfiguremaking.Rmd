@@ -1,0 +1,517 @@
+---
+title: "KB figure making"
+author: "Karissa Barthelson"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+HAVE THE AGED analyses open
+
+## colours
+```{r}
+library(patchwork)
+
+genocols = list(
+  sgsh = c(wt = "#404040", het = "#FF7AAB", hom = "#FF295E"), 
+  naglu = c(wt = "#404040", het = "#E5D300", hom = "#FFAE00"), 
+  hgsnat = c(wt = "#404040", het = "#9EE66F", hom = "#00B064")
+)
+
+theme_set(
+    theme_bw() +
+  theme(
+    axis.text = element_text(size = 18, hjust = 0.5,vjust = 1),
+    axis.title = element_text(size = 18, hjust = 0.5,vjust = 1),
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5,vjust = 1),
+    plot.subtitle = element_text(size = 16, hjust = 0.5,vjust = 1),
+    legend.position = "none") 
+)
+
+```
+
+# Figure 5
+
+
+## C: alternation
+### sgsh
+```{r}
+
+Anova(sgshaged_alts_glm) %>% signif(digits = 2)
+
+f5c1 = print(emmeans(sgshaged_alts_glm, ~ genotype), type = "response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = prob)
+    ) +
+  geom_point(
+    aes(colour = genotype), 
+    size = 7
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax = asymp.UCL, colour = genotype),
+    width = 0.125,
+    size = 1,
+    ) +
+  scale_y_continuous(
+    limits = c(0,0.25)
+  ) +
+  scale_colour_manual(values = genocols$sgsh) +
+
+  labs(y = "Probability of alternation\n(LRLR + RLRL)",
+       x = NULL, 
+       title = expression(italic(sgsh) ~ "S387Lfs"),
+       subtitle = "Effect of genotype: p = 0.15"
+       )
+```
+### naglu
+
+```{r}
+Anova(nagluaged_alts_glm) %>% as.data.frame() 
+
+f5c2 = print(emmeans(nagluaged_alts_glm, ~ genotype), type = "response") %>% 
+   as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = prob)
+    ) +
+  geom_point(
+    aes(colour = genotype), 
+    size = 7
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax = asymp.UCL, colour = genotype),
+    width = 0.125,
+    size = 1,
+    ) +
+  scale_y_continuous(
+    limits = c(0,0.25)
+  ) +
+  scale_colour_manual(values = genocols$naglu) +
+
+  labs(y = NULL,
+       x = NULL, 
+       title = expression(italic(naglu) ~ "A603Efs"),
+       subtitle = "Effect of genotype: p = 0.1"
+       )
+```
+
+### hgsnat
+```{r}
+hgsnataged_alts_glm %>% Anova
+
+f5c3 <- print(emmeans(hgsnataged_alts_glm, ~ genotype), type = "response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = prob)
+  ) +
+  geom_point(
+    aes(colour = genotype), 
+    size = 7
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax = asymp.UCL, colour = genotype),
+    width = 0.125,
+    size = 1,
+    ) +
+  scale_y_continuous(
+    limits = c(0,0.25)
+  ) +
+  scale_colour_manual(values = genocols$hgsnat) +
+
+  labs(y = NULL,
+       x = NULL, 
+       title = expression(italic(hgsnat) ~ "G577Sfs"),
+       subtitle = "Effect of genotype: p = 0.07"
+       )
+
+```
+
+
+## D: total turns
+### sgsh
+```{r}
+Anova(glm_timebyturnssgshaged_fishid)
+
+f5d1 = print(emmeans(glm_timebyturnssgshaged_fishid, ~ genotype), type ="response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = response, colour = genotype)
+  ) +
+  geom_point(
+    size = 7,
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax =asymp.UCL),
+    width = 0.125,
+    size = 1
+  ) +
+  # for posthoc comparissonsy
+  stat_pvalue_manual(
+    emmeans(glm_timebyturnssgshaged_fishid, pairwise ~ genotype, adjust = "tukey") %>%
+      .$contrasts %>%
+      as.data.frame() %>%
+      separate(contrast, into = c("group1", "group2"), sep = " - ") %>%
+      dplyr::filter(p.value < 0.05) %>%  
+      mutate(
+        label = sprintf("p = %.2g", p.value)           # 2 sig digits
+      ),
+    y.position = 190,
+    size = 7,
+    bracket.nudge.y = -1,
+    tip.length = 0.05
+  ) +
+  scale_y_continuous(limits = c(0, 200)) +
+  scale_color_manual(values = genocols$sgsh) +
+  labs(
+    y = "Predicted number of turns\nper bin",
+    title = "",
+    x = NULL,
+    subtitle = "Effect of genotype p = 0.023"
+  ) 
+```
+
+### naglu
+
+```{r}
+
+Anova(naglu_aged_totalturns_glm_fishid)
+f5d2 = print(emmeans(naglu_aged_totalturns_glm_fishid, ~ genotype), type ="response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = response, colour = genotype)
+  ) +
+  geom_point(
+    size = 7,
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax =asymp.UCL),
+    width = 0.125,
+    size = 1
+  ) +
+  stat_pvalue_manual(
+    emmeans(naglu_aged_totalturns_glm_fishid, pairwise ~ genotype, adjust = "tukey") %>%
+      .$contrasts %>%
+      as.data.frame() %>%
+      separate(contrast, into = c("group1", "group2"), sep = " - ") %>%
+      dplyr::filter(p.value < 0.05) %>%  
+      mutate(
+       y.position = 150,
+         label = sprintf("p = %.2g", p.value)           # 2 sig digits
+      ),
+    
+    size = 7,
+    step.increase = 0.3,
+    y.position = "y.position",
+    bracket.nudge.y = -1,
+    tip.length = 0.05
+  ) +
+  scale_y_continuous(limits = c(0, 200)) +
+  scale_color_manual(values = genocols$naglu) +
+  labs(
+    y = NULL,
+    x = NULL,
+    title = "", 
+    subtitle = "Effect of genotype p = 0.001"
+  ) 
+
+```
+
+### hgsnat
+
+```{r}
+Anova(glm_timebyturns)
+
+f5d3 = 
+print(emmeans(glm_timebyturns, ~ genotype), type ="response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = response, colour = genotype)
+  ) +
+  geom_point(
+    size = 7,
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax =asymp.UCL),
+    width = 0.125,
+    size = 1
+  ) +
+  stat_pvalue_manual(
+    emmeans(glm_timebyturns, pairwise ~ genotype, adjust = "tukey") %>%
+      .$contrasts %>%
+      as.data.frame() %>%
+      separate(contrast, into = c("group1", "group2"), sep = " - ") %>%
+      dplyr::filter(p.value < 0.05) %>%  
+      mutate(
+       y.position = 150,
+         label = sprintf("p = %.2g", p.value)           # 2 sig digits
+      ),
+    
+    size = 7,
+    step.increase = 0.3,
+    y.position = "y.position",
+    bracket.nudge.y = -1,
+    tip.length = 0.05
+  ) +
+  scale_y_continuous(limits = c(0, 200)) +
+  scale_color_manual(values = genocols$hgsnat) +
+  labs(
+    y = NULL,
+    x = NULL,
+    title = "", 
+    subtitle = "Effect of genotype p = 0.54"
+  ) 
+
+```
+
+
+
+## E: reps
+### sgsh
+```{r}
+
+Anova(sgsh_aged_glm_reps) %>% signif(digits = 2)
+
+f5e1 <- print(emmeans(sgsh_aged_glm_reps, ~ genotype), type = "response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = prob)
+    ) +
+  geom_point(
+    aes(colour = genotype), 
+    size = 7
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax = asymp.UCL, colour = genotype),
+    width = 0.125,
+    size = 1,
+    ) +
+  scale_y_continuous(
+    limits = c(0,0.6)
+  ) +
+  scale_colour_manual(values = genocols$sgsh) +
+
+  labs(y = "Probability of repetition\n(LLLL + RRRR)",
+       title = "",
+       x = NULL,
+       subtitle = "Effect of genotype: p = 0.34"
+       )
+```
+
+### naglu
+
+```{r}
+naglu_aged_glm_reps %>% Anova
+
+f5e2 = print(emmeans(naglu_aged_glm_reps, ~ genotype), type = "response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = prob)
+    ) +
+  geom_point(
+    aes(colour = genotype), 
+    size = 7
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax = asymp.UCL, colour = genotype),
+    width = 0.125,
+    size = 1,
+    ) +
+  scale_y_continuous(
+    limits = c(0,0.6)
+  ) +
+  scale_colour_manual(values = genocols$naglu) +
+
+  labs(y = "",
+       x = NULL,
+       title = "",
+       subtitle = "Effect of genotype: p = 0.11"
+       )
+```
+
+### hgsnat
+```{r}
+hgsnat_aged_glm_reps %>% Anova
+
+f5e3 = 
+  print(emmeans(hgsnat_aged_glm_reps, ~ genotype), type = "response") %>% 
+  as_tibble() %>% 
+  ggplot(
+    aes(x = genotype, y = prob)
+    ) +
+  geom_point(
+    aes(colour = genotype), 
+    size = 7
+    ) +
+  geom_errorbar(
+    aes(ymin = asymp.LCL, ymax = asymp.UCL, colour = genotype),
+    width = 0.125,
+    size = 1,
+    ) +
+   stat_pvalue_manual(
+    emmeans(hgsnat_aged_glm_reps, pairwise ~ genotype, adjust = "tukey") %>%
+      .$contrasts %>%
+      as.data.frame() %>%
+      separate(contrast, into = c("group1", "group2"), sep = " - ") %>%
+      dplyr::filter(p.value < 0.05) %>%  
+      mutate(
+         label = sprintf("p = %.2g", p.value)           # 2 sig digits
+      ),
+    size = 7,
+    y.position = 0.5,
+    #bracket.nudge.y = -1,
+    tip.length = 0.05
+  ) +
+  scale_y_continuous(
+    limits = c(0,0.6)
+  ) +
+    scale_colour_manual(values = genocols$hgsnat) +
+
+  labs(y = "",
+       x = NULL,
+       title = "",
+       subtitle = "Effect of genotype: p = 0.02"
+       )
+
+
+```
+
+## final fig. 
+```{r}
+(f5c1 | f5c2 | f5c3) /
+  (f5e1 | f5e2 | f5e3) /
+  (f5d1 | f5d2 | f5d3) +
+  plot_layout(
+    guides = "auto"
+  ) +
+  ggsave(
+    "output/KBplots/fig5.pdf", 
+    width = 18, height = 18, units = "cm", scale = 2
+  )
+
+```
+
+# Fig S16 - raw data
+## geno props
+```{r}
+s16.a = ggarrange(
+  readRDS("data/R objects/supps/sgshagedgenoproportions.rds") +
+    scale_fill_manual(
+      values = genocols$sgsh
+    ) +
+    theme(
+      legend.position = "none"
+      ) +
+    labs(
+      title = "sgsh"
+    ),
+  
+  readRDS("data/R objects/supps/nagluagedgenoproportions.rds")+
+    scale_fill_manual(
+      values = genocols$naglu
+    ) +
+    theme(
+      legend.position = "none", 
+      axis.title.y = element_blank()
+      ) +
+    labs(
+      title = "naglu"
+    ),
+  
+  readRDS("data/R objects/supps/hgsnatagedgenoproportions.rds") + 
+    scale_fill_manual(
+      values = genocols$hgsnat
+    ) +
+    theme(
+      legend.position = "none",
+      axis.title.y = element_blank()
+      ) +
+    labs(
+      title = "hgsnat"
+  ), 
+  nrow = 1, 
+  labels = "AUTO"
+)  
+```
+
+## alterntions & reps.
+```{r}
+s16.b = ggarrange(
+  sgshaged_tetrafreq +
+    scale_colour_manual(
+      values = genocols$sgsh
+    ) +
+    labs(colour = "genotype") +
+    scale_y_continuous(limits = c(0,500)),
+  
+  readRDS("data/R objects/supps/nagluaged_tetrafreq.rds") +
+    scale_colour_manual(
+      values = genocols$naglu
+    ) +
+    labs(colour = "genotype") +
+    scale_y_continuous(limits = c(0,500)),
+  
+  readRDS("data/R objects/supps/hgsnataged_tetrafreq.rds") +
+    scale_colour_manual(
+      values = genocols$hgsnat
+    ) +
+    labs(colour = "genotype") +
+    scale_y_continuous(limits = c(0,500)),
+  
+  ncol = 1, 
+  labels = c("G", "H", "I")
+)
+
+```
+
+## total turns
+
+```{r}
+
+s16.turns = ggarrange(
+  sgshaged_raw_turns +
+    scale_fill_manual(
+      values = genocols$sgsh
+    ) +
+    theme(
+      plot.title = element_blank(), 
+      legend.position = "none"
+      ),  
+  
+  
+  nagluaged_raw_turns +
+    scale_fill_manual(
+    values = genocols$naglu
+  ) +
+    theme(
+      axis.title.y = element_blank(), 
+      legend.position = "none"
+      ), 
+  
+  hgsnataged_raw_turns +
+  scale_fill_manual(
+    values = genocols$hgsnat
+  ) +
+    theme(
+      axis.title.y = element_blank(), 
+      legend.position = "none"
+    ),
+  nrow = 1, 
+  labels = c("D","E", "F")
+)
+```
+
+## final fig
+```{r}
+ggarrange(
+  s16.a, 
+  s16.turns,
+  s16.b, 
+  ncol = 1, 
+  heights = c(1,1,3)
+) +
+  ggsave(
+    "output//KBplots/S16.pdf", scale= 2
+  )
+```
+
+
