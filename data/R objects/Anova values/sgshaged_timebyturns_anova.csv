@@ -1,0 +1,6 @@
+"","Chisq","Df","Pr(>Chisq)"
+"genotype",20,2,5.2e-05
+"bin",42,5,6.7e-08
+"tank",10,3,0.017
+"sex",13,1,0.00037
+"genotype:bin",2.5,10,0.99

@@ -1,3 +1,7 @@
+#manual files to ignore
+
+._*
+
 # History files
 .Rhistory
 .Rapp.history
